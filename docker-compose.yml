@@ -1,0 +1,64 @@
+version: '3'
+services:
+
+  nats:
+      image: 'nats:0.8.0'
+      entrypoint: "/gnatsd -DV"
+      expose:
+        - "4222"
+      ports:
+        - "8222:8222"
+      hostname: nats-server
+      networks: 
+      - nats-net
+
+  service1:
+    build: ./service1
+    links:
+      - nats
+    volumes: 
+      - ./service1:/service1
+    environment:
+       NATS_URI: nats://nats:4222
+       PORT: 3001
+    depends_on:
+      - nats
+    ports:
+      - "3001:3001"
+    networks: 
+      - nats-net 
+  
+  service2:
+    build: ./service2
+    links:
+      - nats
+    volumes: 
+      - ./service2:/service2
+    environment:
+       NATS_URI: nats://nats:4222
+       PORT: 3002
+    depends_on:
+      - nats
+    ports:
+      - "3002:3002"
+    networks: 
+      - nats-net 
+  api:
+    build: ./api
+    links:
+      - nats
+    volumes: 
+      - ./api:/api
+    environment:
+       NATS_URI: nats://nats:4222
+       MONGO_URI: mongodb://mongodb:27017
+       PORT: 3003
+    depends_on:
+      - nats
+    ports:
+      - "3003:3003"
+    networks: 
+      - nats-net 
+networks: 
+  nats-net:
+    driver: bridge
